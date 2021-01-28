@@ -1,0 +1,71 @@
+<html>
+	<head>
+	<script type="text/javascript" src="https://domain:port/support/api/47.0/lightning/opencti_min.js"></script>
+	<script type="text/javascript">
+		<script type="text/javascript">
+		var SAMPLEMC = "SAMPLEMC__c";
+		var SAMPLEMC_SUBSCRIPTION = null;
+ 
+		function subscribeToSampleMC() {
+			if (!SAMPLEMC_SUBSCRIPTION) {
+				sforce.opencti.subscribe({channelName: SAMPLEMC, listener: onPublishMessage, callback: subscribeSampleMCCallback});
+				let mcSubscribedToggle = document.querySelector("#opencti_mcSubscribedToggle");
+				mcSubscribedToggle.innerHTML = "true";
+			}
+		}
+ 
+		function unsubscribeToSampleMC() {
+			if (SAMPLEMC_SUBSCRIPTION) {
+				sforce.opencti.unsubscribe({subscription: SAMPLEMC_SUBSCRIPTION, callback: lightningMessageServiceCallback});
+				let mcSubscribedToggle = document.querySelector("#opencti_mcSubscribedToggle");
+				mcSubscribedToggle.innerHTML = "false";
+				SAMPLEMC_SUBSCRIPTION = null;
+			}
+		}
+ 
+		function publishSampleMC() {
+			const message = {
+				from: "LightningMessageService_OpenCTI_TestPage",
+				type: "SampleMC",
+				time: new Date().toLocaleTimeString()
+			};
+ 
+			sforce.opencti.publish({channelName: SAMPLEMC, message: message, callback: lightningMessageServiceCallback});
+		}
+ 
+		function lightningMessageServiceCallback(result) {
+			if (result.success) {
+				console.log(result.returnValue);
+			} else {
+				console.log(result.errors);
+			}
+		}
+ 
+		function subscribeSampleMCCallback(result) {
+			if (result.success) {
+				SAMPLEMC_SUBSCRIPTION = result.subscription;
+			} else {
+				console.log(result.errors);
+			}
+		}
+ 
+		function onPublishMessage(message) {
+			var textArea = document.querySelector("#opencti_testMessageTextArea");
+			textArea.innerHTML = message ? JSON.stringify(message, null, '\t') : 'no message payload';
+		}
+	</script>
+	</head>
+	<body>
+		<div>
+			<p>MessageChannel: SampleMC</p>
+			<p>Subscribed: <span id="opencti_mcSubscribedToggle">false</span></p>
+			<br/>
+			<input value="Subscribe" type="button" onclick="subscribeToSampleMC()"/>
+			<input value="Unsubscribe" type="button" onclick="unsubscribeToSampleMC()"/>
+			<input value="Publish" type="button" onclick="publishSampleMC()"/>
+			<br/>
+			<p>Received message:</p>
+			<textarea id="opencti_testMessageTextArea" class="opencti_testMessageTextArea" rows="10" style="disabled:true;resize:none;width:100%;"/>
+		</div>
+	</body>
+</html>
